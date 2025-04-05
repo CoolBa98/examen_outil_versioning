@@ -5,6 +5,7 @@ from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 import pandas as pd
 import seaborn as sns
+import joblib
 
 def preprocess_data(df, target_column):
 
@@ -29,14 +30,6 @@ def preprocess_data(df, target_column):
 
     return train_test_split(x_scaled, y, test_size=0.2, random_state=42)
 
-def plot_confusion_matrix(y_true, y_pred):
-    cm = confusion_matrix(y_true, y_pred)
-    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
-    plt.xlabel("Prédictions")
-    plt.ylabel("Vraies valeurs")
-    plt.title("Matrice de confusion")
-    plt.show()
-
 def train_model(df, target_column, model_name):
     x_train, x_test, y_train, y_test = preprocess_data(df, target_column)
 
@@ -44,44 +37,29 @@ def train_model(df, target_column, model_name):
         model = LinearRegression()
         model.fit(x_train, y_train)
         preds = model.predict(x_test)
-        # mse = mean_squared_error(y_test, preds)
-        # plt.scatter(y_test, preds)
-        # plt.xlabel("Vraies valeurs")
-        # plt.ylabel("Prédictions")
-        # plt.title("Régression : Vraies vs Prédictions")
-        # plt.show()
-        return y_test, preds
+        joblib.dump(model, 'modele.pkl')
+        return "modele.pkl", y_test, preds
 
     elif model_name == "Classification svm":
         model = SVC()
         model.fit(x_train, y_train)
         preds = model.predict(x_test)
-        # print("Rapport de classification :")
-        # print(classification_report(y_test, preds))
-        # plot_confusion_matrix(y_test, preds)
-        return y_test, preds
+        joblib.dump(model, 'modele.pkl')
+        return "modele.pkl", y_test, preds
 
     elif model_name == "Classification Randomforest":
         model = RandomForestClassifier(n_estimators=100)
         model.fit(x_train, y_train)
         preds = model.predict(x_test)
-        # print("Rapport de classification :")
-        # print(classification_report(y_test, preds))
-        # plot_confusion_matrix(y_test, preds)
-        return y_test, preds
+        joblib.dump(model, 'modele.pkl')
+        return "modele.pkl", y_test, preds
 
     elif model_name == "Regression Randomforest":
         model = RandomForestRegressor(n_estimators=100, random_state=42)
         model.fit(x_train, y_train)
         preds = model.predict(x_test)
-        # mse = mean_squared_error(y_test, preds)
-        # print(f"Mean Squared Error: {mse:.4f}")
-        # plt.scatter(y_test, preds)
-        # plt.xlabel("Vraies valeurs")
-        # plt.ylabel("Prédictions")
-        # plt.title("Régression : Vraies vs Prédictions")
-        # plt.show()
-        return y_test, preds
+        joblib.dump(model, 'modele.pkl')
+        return "modele.pkl", y_test, preds
 
     else:
         print("Modèle non reconnu.", model_name)

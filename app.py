@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from module_ml import train_model
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, mean_squared_error
 
 st.set_page_config(page_title="Examen outil versioning", layout="wide")
 st.title("EXAMEN OUTIL VERSIONING")
@@ -11,14 +11,6 @@ st.divider()
 
 col1, col2 = st.columns(2)
 file = col1.file_uploader(label="Veuillez charger un fichier csv contenant les données: ", type="csv")
-
-def plot_confusion_matrix(y_true, y_pred):
-    cm = confusion_matrix(y_true, y_pred)
-    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
-    plt.xlabel("Prédictions")
-    plt.ylabel("Vraies valeurs")
-    plt.title("Matrice de confusion")
-    plt.show()
 
 if file:
     data = pd.read_csv(file)
@@ -39,8 +31,51 @@ if file:
     btn = st.button("Lancer l'entrainement", type="primary")
 
     if btn:
-        y_test, preds = train_model(data, target, model)
-        if model in ["Classification svm", "Classification Randomforest"]:
-            plot_confusion_matrix(y_true=y_test, y_pred=preds)
+        chemin_model, y_test, preds = train_model(data, target, model)
+
+        # AFFICHAGE DES RESULTATS
+        if model in ["Regression linéaire", "Regression Randomforest"]:
+            # Calculer l'erreur quadratique moyenne (MSE)
+            mse = mean_squared_error(y_test, preds)
+
+            # Afficher l'erreur dans Streamlit
+            st.write(f"Erreur quadratique moyenne (MSE): {mse:.2f}")
+
+            # Créer un graphique de comparaison entre vraies valeurs et prédictions
+            fig, ax = plt.subplots()
+            ax.scatter(y_test, preds, color='blue')
+            ax.plot([min(y_test), max(y_test)], [min(y_test), max(y_test)], color='red',
+                    linestyle='--')  # Ligne d'égalité
+            ax.set_xlabel("Vraies valeurs")
+            ax.set_ylabel("Prédictions")
+            ax.set_title("Régression : Vraies vs Prédictions")
+
+            # Afficher le graphique dans Streamlit
+            st.pyplot(fig)
+
+        elif model in ["Classification svm", "Classification Randomforest"]:
+            # Calculer la matrice de confusion
+            cm = confusion_matrix(y_test, preds)
+
+            # Affichage de la matrice de confusion avec Seaborn
+            fig, ax = plt.subplots()
+            sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", ax=ax)
+            ax.set_xlabel("Prédictions")
+            ax.set_ylabel("Réel")
+            ax.set_title("Matrice de Confusion")
+
+            # Afficher la matrice dans Streamlit
+            st.pyplot(fig)
+
+        with open(chemin_model, "rb") as f:
+            model_file = f.read()
+
+        # Bouton pour télécharger le modèle
+        st.download_button(
+            label="Télécharger le modèle entrainé",
+            data=model_file,
+            file_name="model.pkl",
+            mime="application/octet-stream"
+        )
 
     st.divider()
